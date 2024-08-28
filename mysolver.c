@@ -348,7 +348,7 @@
         HYPRE_ParCSRGMRESDestroy(solver);
       
     }
-    if (solver_id == 80)
+    else if (solver_id == 80)
     {
         int num_iterations;
         double final_res_norm;
