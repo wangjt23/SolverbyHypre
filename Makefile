@@ -16,5 +16,7 @@ LFLAGS = -L$(HYPRE_DIR)/lib -lHYPRE -lm
 
 ij: ij.c
 	$(CC) -o $@ $^ $(CFLAGS) $(LFLAGS)
+mysolvertest: mysolver.c
+	$(CC) -o $@ $^ $(CFLAGS) $(LFLAGS)
 mysolver: mysolver.c
-	$(CC) -O3 -o $@ $^ $(CFLAGS) $(LFLAGS) 
+	$(CC) -O3 -o $@ $^ $(CFLAGS) $(LFLAGS)
