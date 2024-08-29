@@ -40,4 +40,4 @@ make mysolver
 mpirun -np 16 ./mysolver -matPath ./data/csr1.hpcsr -rhsPath ./data/b1.hpcsr -solver 3 -maxIters 10 -tol 1e-3
 ```
 ## update
-[2024.8.28] Add mysolver.c, 
+[2024.8.28] first commit 

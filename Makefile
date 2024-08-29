@@ -1,5 +1,5 @@
 CC        = mpicc
-HYPRE_DIR = /usr/local/hypre
+HYPRE_DIR = /work/software/hypre-2.31.0/install
 
 # compile configs
 CFLAGS = -g -Wall -I$(HYPRE_DIR)/include
