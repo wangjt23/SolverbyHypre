@@ -1,5 +1,6 @@
 CC        = mpicc
-HYPRE_DIR = /work/software/hypre-2.31.0/install
+# change here
+HYPRE_DIR = /data1/wjt/Software/hypre/install
 
 # compile configs
 CFLAGS = -g -Wall -I$(HYPRE_DIR)/include
@@ -16,7 +17,7 @@ LFLAGS = -L$(HYPRE_DIR)/lib -lHYPRE -lm
 
 ij: ij.c
 	$(CC) -o $@ $^ $(CFLAGS) $(LFLAGS)
-mysolvertest: mysolver.c
-	$(CC) -o $@ $^ $(CFLAGS) $(LFLAGS)
 mysolver: mysolver.c
-	$(CC) -O3 -o $@ $^ $(CFLAGS) $(LFLAGS)
+	$(CC) -o $@ $^ $(CFLAGS) $(LFLAGS)
+# mysolver: mysolver.c
+# 	$(CC) -O3 -o $@ $^ $(CFLAGS) $(LFLAGS)

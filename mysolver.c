@@ -40,13 +40,14 @@
     int build_rhs_arg_index   =-1;
     double solver_tol         = 1.e-6;
     int solver_max_iter_nums  = 100;
+    int saveSol_index = -1;
     // AMG default prameters
-    int amg_print_level       = 0;
+    int amg_print_level       = 1;
     int amg_num_sweeps        = 1;
     int amg_corase_type       = 8; // PMIS
     int amg_prolongation_type = 0;
     int amg_max_coarsen_size  = 9;
-    int amg_max_levels        = 50;
+    int amg_max_levels        = 25;
     int amg_precond_iters     = 1;
     double amg_strong_threshold  = 0.25;
     int amg_cycle_type        = 1; //1: V-cycle; 2: W-cycle 
@@ -99,6 +100,11 @@
             arg_index ++;
             build_rhs_arg_index = arg_index++;
             }
+            else if (strcmp(argv[arg_index], "-SolPath") == 0 )
+            {
+            arg_index ++;
+            saveSol_index = arg_index++;
+            }
             else
             {
             arg_index++;
@@ -110,7 +116,6 @@
             printf("\n");
             printf("Usage: %s [<options>]\n", argv[0]);
             printf("\n");
-            // printf("  -n <n>              : problem size in each direction (default: 33)\n");
             printf("  -solver <ID>          : solver ID\n");
             printf("                        0  - AMG (default) \n");
             printf("                        1  - PCG-AMG\n");
@@ -120,6 +125,7 @@
             printf("  -rhsPath <FILEDIR>    : rhs vec file path\n");
             printf("  -maxIters <n>         : set solver's max iterations (default: 100)\n");
             printf("  -tol <value>          : set solver's tolerance (default: 1e-6)\n");
+            printf("  -SolPath <FILEDIR>    : whether save solution in one file(given the file dir)(default: not)\n");
             // printf("  -print_system       : print the matrix and rhs\n");
             printf("\n");
         }
@@ -155,17 +161,7 @@
     HYPRE_IJVectorInitialize(x);
     HYPRE_IJVectorAssemble(x);
     HYPRE_IJVectorGetObject(x, (void **) &par_x );
-    // printf("ALL zeros: %d\n",par_x->actual_local_size);
     // HYPRE_IJVectorDestroy(x);
-    
-    /*  Print out the system  - files names will be IJ.out.A.XXXXX
-    //     and IJ.out.b.XXXXX, where XXXXX = processor id */
-    // if (print_system)
-    // {
-    //     HYPRE_IJMatrixPrint(A, "IJ.out.A");
-    //     HYPRE_IJVectorPrint(b, "IJ.out.b");
-    // }
-
 
     /* Choose a solver and solve the system */
 
@@ -229,30 +225,26 @@
         /* Create solver */
         double start_setup_time = MPI_Wtime();
         HYPRE_ParCSRPCGCreate(MPI_COMM_WORLD, &solver);
-
         /* Set some parameters (See Reference Manual for more parameters) */
         HYPRE_PCGSetMaxIter(solver, solver_max_iter_nums); /* max iterations */
         HYPRE_PCGSetTol(solver, solver_tol); /* conv. tolerance */
         HYPRE_PCGSetTwoNorm(solver, 1); /* use the two norm as the stopping criteria */
         HYPRE_PCGSetPrintLevel(solver, 2); /* print solve info */
         HYPRE_PCGSetLogging(solver, 1); /* needed to get run info later */
-
         /* Now set up the AMG preconditioner and specify any parameters */
         HYPRE_BoomerAMGCreate(&precond);
         HYPRE_BoomerAMGSetPrintLevel(precond, amg_print_level); /* print amg solution info */
         HYPRE_BoomerAMGSetCoarsenType(precond, amg_corase_type);/*PMIS*/
         HYPRE_BoomerAMGSetInterpType( precond, amg_prolongation_type);
-        HYPRE_BoomerAMGSetMaxLevels(solver, amg_max_levels);
+        HYPRE_BoomerAMGSetMaxLevels(precond, amg_max_levels);
         HYPRE_BoomerAMGSetPMaxElmts( precond,0);/*Turn of truncation*/
-        // HYPRE_BoomerAMGSetRelaxType(precond, 0); /* Sym G.S./Jacobi hybrid */
+        HYPRE_BoomerAMGSetRelaxType(precond, 0); /* Sym G.S./Jacobi hybrid */
         HYPRE_BoomerAMGSetNumSweeps(precond, amg_num_sweeps);
         HYPRE_BoomerAMGSetTol(precond, 0); /* conv. tolerance zero */
         HYPRE_BoomerAMGSetMaxIter(precond, amg_precond_iters); /* do only one iteration! */
-
         /* Set the PCG preconditioner */
         HYPRE_PCGSetPrecond(solver, (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve,
                             (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup, precond);
-
         /* Now setup and solve! */
         HYPRE_ParCSRPCGSetup(solver, parcsr_A, par_b, par_x);
         double end_setup_time = MPI_Wtime();
@@ -301,7 +293,6 @@
 
         /* AMG Setup*/
         HYPRE_BoomerAMGCreate(&precond);
-        HYPRE_BoomerAMGCreate(&precond);
         HYPRE_BoomerAMGSetPrintLevel(precond, amg_print_level); /* print amg solution info */
         HYPRE_BoomerAMGSetCoarsenType(precond, amg_corase_type);/*PMIS*/
         HYPRE_BoomerAMGSetInterpType( precond, amg_prolongation_type);
@@ -310,7 +301,7 @@
         HYPRE_BoomerAMGSetPMaxElmts( precond,0);/*Turn of truncation*/
         HYPRE_BoomerAMGSetStrongThreshold(precond, amg_strong_threshold);
         HYPRE_BoomerAMGSetCycleType(precond, amg_cycle_type);
-        // HYPRE_BoomerAMGSetRelaxType(precond, 7); /* Sym G.S./Jacobi hybrid */
+        // HYPRE_BoomerAMGSetRelaxType(precond, 0); /* Sym G.S./Jacobi hybrid */
         HYPRE_BoomerAMGSetNumSweeps(precond, amg_num_sweeps);
         HYPRE_BoomerAMGSetTol(precond, 0); /* conv. tolerance zero */
         HYPRE_BoomerAMGSetMaxIter(precond, amg_precond_iters); /* do only one iteration! */
@@ -418,11 +409,20 @@
         if (myid == 0) { printf("Invalid solver id specified.\n"); }
     }
 
+    /* Save solution*/
+    if(saveSol_index>=0) 
+    {
+        hypre_Vector* sol_x;
+        sol_x= hypre_ParVectorToVectorAll((hypre_ParVector *)par_x);
+        if(myid==0) HYPRE_VectorPrint((HYPRE_Vector)sol_x, argv[saveSol_index]);
+        if(myid==0) printf("Solution have saved in %s;\n",argv[saveSol_index]);
+        // HYPRE_ParVectorPrint(par_x,argv[saveSol_index]);
+    }
+    
 
     /* Clean up */
-    // HYPRE_IJMatrixDestroy(A);
-    // HYPRE_IJVectorDestroy(b);
-    
+    HYPRE_ParCSRMatrixDestroy(parcsr_A);
+    hypre_ParVectorDestroy(par_b);
 
     /* Finalize HYPRE */
     HYPRE_Finalize();
@@ -484,40 +484,33 @@
         *-----------------------------------------------------------*/
 
         A_CSR = HYPRE_CSRMatrixRead(filename);
-        // hypre_CSRMatrix *csr_matrix = (hypre_CSRMatrix *) A_CSR;
-        // printf("DEBUG001: Mat rows: %d, cols: %d, nozeros: %d\n",csr_matrix->num_rows,csr_matrix->num_cols,csr_matrix->num_nonzeros);
-        // printf("DEBUG001: 1st element: %.16le\n",csr_matrix->data[0]);
-        // printf("DEBUG001: 2st element: %.16le\n",csr_matrix->data[1]);
-        // printf("DEBUG001: 3st element: %.16le\n",csr_matrix->data[2]);
-        // printf("DEBUG001: 53600st element: %.16le\n",csr_matrix->data[53599]);
     }
 
-    if (myid == 0)
+    if (num_functions !=1){
+        fprintf(stderr, "Do not support num functions != 1! \n");
+    }
+
+    if (myid == 0 && num_functions==1)
     {
         HYPRE_CSRMatrixGetNumRows(A_CSR, &num_dofs);
-        num_nodes = num_dofs / num_functions;
-        if (num_dofs == num_functions * num_nodes)
+        num_nodes = num_dofs;
+        row_part = hypre_CTAlloc(HYPRE_BigInt,  numprocs + 1, HYPRE_MEMORY_HOST);
+
+        row_part[0] = 0;
+        size = num_nodes / numprocs;
+        rest = num_nodes - size * numprocs;
+        for (i = 0; i < rest; i++)
         {
-            row_part = hypre_CTAlloc(HYPRE_BigInt,  numprocs + 1, HYPRE_MEMORY_HOST);
-
-            row_part[0] = 0;
-            size = num_nodes / numprocs;
-            rest = num_nodes - size * numprocs;
-            for (i = 0; i < rest; i++)
-            {
-            row_part[i + 1] = row_part[i] + (size + 1) * num_functions;
-            }
-            for (i = rest; i < numprocs; i++)
-            {
-            row_part[i + 1] = row_part[i] + size * num_functions;
-            }
-
-            col_part = row_part;
+        row_part[i + 1] = row_part[i] + size + 1;
         }
+        for (i = rest; i < numprocs; i++)
+        {
+        row_part[i + 1] = row_part[i] + size;
+        }
+
+        col_part = row_part;
     }
-
     HYPRE_CSRMatrixToParCSRMatrix(MPI_COMM_WORLD, A_CSR, row_part, col_part, A_ptr);
-
     if (myid == 0)
     {
         HYPRE_CSRMatrixDestroy(A_CSR);
@@ -572,14 +565,8 @@
         *-----------------------------------------------------------*/
 
         b_CSR = HYPRE_VectorRead(filename);
-        // hypre_Vector *hp_vec = (hypre_Vector *) b_CSR;
-        // printf("DEBUG001: Vec size: %d\n",hp_vec->size);
-        // printf("DEBUG001: 1st element: %.16le\n",hp_vec->data[0]);
-        // printf("DEBUG001: 2st element: %.16le\n",hp_vec->data[1]);
-        // printf("DEBUG001: 3st element: %.16le\n",hp_vec->data[2]);
     }
     HYPRE_VectorToParVector(hypre_MPI_COMM_WORLD, b_CSR, partitioning, &b);
-
     *b_ptr = b;
 
     HYPRE_VectorDestroy(b_CSR);
