@@ -418,6 +418,7 @@
         if(myid==0) printf("Solution have saved in %s;\n",argv[saveSol_index]);
         // HYPRE_ParVectorPrint(par_x,argv[saveSol_index]);
     }
+    hypre_ParCSRMatrixPrintIJ(parcsr_A, 0, 0, "myij.out.A");
     
 
     /* Clean up */
@@ -511,6 +512,8 @@
         col_part = row_part;
     }
     HYPRE_CSRMatrixToParCSRMatrix(MPI_COMM_WORLD, A_CSR, row_part, col_part, A_ptr);
+    // reorder parcsr 
+    hypre_ParCSRMatrixReorder(*A_ptr);
     if (myid == 0)
     {
         HYPRE_CSRMatrixDestroy(A_CSR);

@@ -1,6 +1,6 @@
 CC        = mpicc
 # change here
-HYPRE_DIR = /data1/wjt/Software/hypre/install
+HYPRE_DIR = /usr/local/hypre/
 
 # compile configs
 CFLAGS = -g -Wall -I$(HYPRE_DIR)/include
