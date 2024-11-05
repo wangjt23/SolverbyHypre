@@ -1,3 +1,5 @@
+use hypre_ParCSRMatrixReorder to reorder parcsr instead of csr_py2hypre.py
+
 # Solve large-scale sparse matrix linear equations in parallel using hypre
 
 ## Required data format
@@ -65,6 +67,6 @@ mpirun -np 4 ./mysolver -matPath ./data/csr1.hpcsr -rhsPath ./data/b1.hpcsr -sol
 
 ## update
 
-[2024.8.28] first commit
-
-[2024.10.22] fix bugs that hypre can not load scipy csr format matrix correctly(since hypre's HYPRE_ParCSRMatrix format place the diag element to the first poisition at each row).
+- [2024.8.28] first commit
+- [2024.10.22] fix bugs that hypre can not load scipy csr format matrix correctly(since hypre's HYPRE_ParCSRMatrix format place the diag element to the first poisition at each row).
+- [2024.11.5] use hypre_ParCSRMatrixReorder to reorder parcsr instead of csr_py2hypre.py
