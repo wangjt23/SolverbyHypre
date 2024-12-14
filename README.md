@@ -1,5 +1,3 @@
-use hypre_ParCSRMatrixReorder to reorder parcsr instead of csr_py2hypre.py
-
 # Solve large-scale sparse matrix linear equations in parallel using hypre
 
 ## Required data format
